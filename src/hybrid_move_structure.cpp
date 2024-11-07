@@ -1,3 +1,9 @@
+#include "hybrid_move_structure.hpp"
 #include <iostream>
+#include <sdsl/sd_vector.hpp>
 
-int main(void) { std::cout << "compiles"; }
+sdsl::sd_vector B_FL;
+
+int main(void) {
+    std::cout << "compiles" << std::endl;
+}
