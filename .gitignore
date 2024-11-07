@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+.zig-cache/
+zig-out/
+/release/
+/debug/
+/build/
+/build-*/
+/docgen_tmp/
+
+lib/
