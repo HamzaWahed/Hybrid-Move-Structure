@@ -1,13 +1,14 @@
 #include "hybrid_move_structure.hpp"
 #include <cstdint>
+#include <fstream>
 #include <sdsl/sd_vector.hpp>
 #include <vector>
 
-class Row {
+typedef struct __attribute__((packed)) row {
     unsigned int head : 3;
     unsigned int length : 10;
     unsigned int offset : 10;
-};
+} Row;
 
 class HybridMoveStructure {
   public:
@@ -16,9 +17,10 @@ class HybridMoveStructure {
     std::vector<Row> rows;
     sdsl::bit_vector B_FL;
 
-    // TODO: load move structure from binary file
-    HybridMoveStructure(std::string moveStructureFilename) {
-        return null;
+    // TODO: initialize move structure from binary file
+    HybridMoveStructure(std::string filename) {
+        std::ifstream file;
+        file.open(filename);
     }
 
     // TODO: Calculate the pointer field given an index
