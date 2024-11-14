@@ -77,15 +77,21 @@ class HybridMoveStructure {
         r = rows.size();
     }
 
-    // TODO: Calculate the pointer field given an index
-    u_int64_t pointer(uint64_t index) {
+    u_int64_t computePointer(uint64_t index) {
 
         return 0;
     }
 
+    Position LF(Position pos) {}
+
     const Row get(u_int64_t pos) {
         assert(pos < rows.size());
         return rows[pos];
+    }
+
+    const Row get(Position pos) {
+        assert(pos.run < rows.size());
+        return rows[pos.run];
     }
 
     u_int64_t size() {
