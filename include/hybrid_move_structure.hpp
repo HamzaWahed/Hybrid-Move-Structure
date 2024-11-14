@@ -107,6 +107,9 @@ class HybridMoveStructure {
     u_int64_t r;
     vector<Row> rows;
     sdsl::bit_vector B_FL;
+    std::vector<int> C;
+    std::vector<char> H_L;
+    std::vector<std::unique_ptr<sdsl::bit_vector>> B_x;
 
     void computeTable(vector<vector<u_int64_t>> L_block_indices) {
         u_int64_t curr_L_num = 0;
@@ -119,8 +122,7 @@ class HybridMoveStructure {
                 rows[pos].offset = F_seen - L_seen;
                 F_seen += get(pos).length;
 
-                while (curr_L_num < r &&
-                       F_seen >= L_seen + get(curr_L_num).length) {
+                while (curr_L_num < r && F_seen >= L_seen + get(curr_L_num).length) {
                     L_seen += get(curr_L_num).length;
                     ++curr_L_num;
                 }
