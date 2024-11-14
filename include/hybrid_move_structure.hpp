@@ -53,12 +53,27 @@ class HybridMoveStructure {
         r = 0;
         n = 0;
         uint length = 0;
+        std::vector<int> chars(kALPHABET_SIZE, 0);
+        // to keep the count of each character, used in computing C
+        std::vector<int> counts;
+        // to map a character to the index
+        // Ex. #:0, $:1, A:2, C:3, G:4, T:5
+        std::vector<int> char_to_index;
+
+        char_to_index.resize(kALPHABET_SIZE);
+        std::fill(char_to_index.begin(), char_to_index.end(), kALPHABET_SIZE);
 
         while ((c_in = bwt.get()) != EOF) {
+            // increase count of the characters to find the characters that exist in the BWT
+            chars[c_in] += 1;
+
             uint c = static_cast<uint>(c_in);
             c = c <= kTerminator ? kTerminator : c;
 
             if (idx != 0 && c != last_c) {
+                // save the run head character in H_L
+                H_L.push_back(c_in);
+
                 rows.push_back({last_c, length, 0});
                 L_block_indices[last_c].push_back(run++);
                 n += length;
@@ -75,6 +90,30 @@ class HybridMoveStructure {
         n += length;
 
         r = rows.size();
+
+        int sigma = 0;
+        // Determining the number of B_x bit vectors
+        for (int i = 0; i < kALPHABET_SIZE; i++) {
+            if (chars[i] != 0) {
+                char_to_index[i] = sigma;
+                sigma += 1;
+                counts.push_back(chars[i]);
+                sdsl::bit_vector *new_b_vector = new sdsl::bit_vector(r, 0);
+                B_x.emplace_back(std::unique_ptr<sdsl::bit_vector>(new_b_vector));
+            }
+        }
+
+        // Building C
+        int count = 0;
+        for (int i = 0; i < counts.size(); i++) {
+            C.push_back(count);
+            count += counts[i];
+        }
+
+        //Building the B_x bit vectors
+        for (int i = 0; i < r; i++) {
+            (*B_x[char_to_index[static_cast<int>(H_L[i])]])[i] = 1;
+        }
     }
 
     u_int64_t computePointer(uint64_t index) {
