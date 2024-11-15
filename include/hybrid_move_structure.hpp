@@ -38,7 +38,7 @@ struct Position {
 class HybridMoveStructure {
   public:
     HybridMoveStructure() {}
-    HybridMoveStructure(ifstream &bwt) {
+    HybridMoveStructure(ifstream &bwt, u_int64_t text_length) {
         bwt.clear();
         bwt.seekg(0);
 
@@ -51,7 +51,7 @@ class HybridMoveStructure {
         u_int64_t run = 0;
         u_int64_t idx = 0;
         r = 0;
-        n = 0;
+        n = text_length;
         uint length = 0;
         std::vector<int> chars(kALPHABET_SIZE, 0);
         // to keep the count of each character, used in computing C
@@ -82,17 +82,19 @@ class HybridMoveStructure {
 
             if (idx != 0 && c != last_c) {
                 // save the run head character in H_L
-                H_L.push_back(c_in);
+                H_L.push_back(static_cast<char>(last_c));
 
-                // set the run head in B_L
-                // TODO: MAKE SURE IDX IS THE RIGHT THING TO USE HERE
-                // save the run head offset
+                //TODO: this is a quick fix for the first bit of B_L not being set
+                if(idx - 1 == 0) {
+                    B_L[0] = 1;
+                    run_heads.push_back(idx-1);
+                }
                 run_heads.push_back(idx);
                 B_L[idx] = 1;
 
                 rows.push_back({last_c, length, 0});
                 L_block_indices[last_c].push_back(run++);
-                n += length;
+                // n += length;
                 length = 0;
             }
 
@@ -102,8 +104,9 @@ class HybridMoveStructure {
         }
 
         rows.push_back({last_c, length, 0});
+        H_L.push_back(static_cast<char>(last_c));
         L_block_indices[last_c].push_back(run++);
-        n += length;
+        // n += length;
 
         r = rows.size();
 
@@ -131,7 +134,7 @@ class HybridMoveStructure {
 
         //Building the B_x bit vectors
         for (int i = 0; i < r; i++) {
-            (*B_x[char_to_index[static_cast<int>(H_L[i])]])[i] = 1;
+            (*B_x[char_to_index[H_L[i]]])[i] = 1;
         }
         //TODO: not sure if there should be anything else done to B_x before this step
         // create the rank objects for the B_x bit vectors
@@ -141,16 +144,17 @@ class HybridMoveStructure {
         }
 
         // Build B_F from B_L
-        // TODO: I edited how the occs array is being filled 
-        // so that we can continue treating the BWT as an ifstream
+        // TODO: I edited how the occs array is being filled
+        int curr_idx = 0;
         for (int i = 0; i < r; i++) {
             char curr_char = H_L[i];
             int curr_length = rows[i].length;
-            for(int j = i; j < i + curr_length; j++) {
-                (*occs[char_to_index[static_cast<int>(curr_char)]])[j] = 1;
+            for(int j = curr_idx; j < curr_idx + curr_length; j++) {
+                (*occs[char_to_index[curr_char]])[j] = 1;
             }
-            i += curr_length - 1;
+            curr_idx += curr_length;
         }
+
         // create the rank objects for the occurance bit vectors
         for (auto &occ : occs) {
             occs_rank.emplace_back(std::unique_ptr<sdsl::rank_support_v<>>(
@@ -159,8 +163,7 @@ class HybridMoveStructure {
         sdsl::rank_support_v<> rank_B_L = sdsl::rank_support_v(&B_L);
         for (int i = 0; i < r; i++) {
             int lf = 0;
-            // TODO: check if putting HL_[i] here instead is correct
-            int alphabet_index = char_to_index[static_cast<int>(H_L[i])];
+            int alphabet_index = char_to_index[H_L[i]];
             lf += C[alphabet_index];
             // add the rank of the bwt_row
             auto &occ_rank = *occs_rank[alphabet_index];
@@ -195,6 +198,13 @@ class HybridMoveStructure {
         // keep it as a normal bit vector this time
         B_FL = B_FL_temp;
         select_1_B_FL = sdsl::select_support_mcl<>(&B_FL);
+
+        // print results
+        cout << "B_FL: " << endl;
+        for (size_t i = 0; i < B_FL.size(); ++i) {
+            cout << B_FL[i];
+        }
+        cout << endl;
     }
 
     u_int64_t computePointer(uint64_t index) {
