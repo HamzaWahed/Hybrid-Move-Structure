@@ -8,4 +8,5 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     HybridMoveStructure hmv(file, text_length);
+
 }

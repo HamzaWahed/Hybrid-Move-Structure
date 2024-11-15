@@ -43,8 +43,8 @@ class HybridMoveStructure {
         bwt.seekg(0);
 
         rows = vector<Row>();
-        vector<vector<size_t>> L_block_indices =
-            vector<vector<size_t>>(kALPHABET_SIZE);
+        vector<vector<u_int64_t>> L_block_indices =
+            vector<vector<u_int64_t>>(kALPHABET_SIZE);
 
         uint last_c;
         int c_in;
@@ -205,6 +205,12 @@ class HybridMoveStructure {
             cout << B_FL[i];
         }
         cout << endl;
+
+        computeTable(L_block_indices);
+        cout << "Rows: " << endl;
+        for (const auto &row : rows) {
+            cout << "Head: " << char(row.head) << ", Length: " << row.length << ", Offset: " << row.offset << endl;
+        }
     }
 
     u_int64_t computePointer(uint64_t index) {
