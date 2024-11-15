@@ -56,9 +56,6 @@ class HybridMoveStructure {
         std::vector<int> chars(kALPHABET_SIZE, 0);
         // to keep the count of each character, used in computing C
         std::vector<int> counts;
-        // to map a character to the index
-        // Ex. #:0, $:1, A:2, C:3, G:4, T:5
-        std::vector<int> char_to_index;
         // Temporarily build these to obtain B_FL
         sdsl::bit_vector B_F = sdsl::bit_vector(n, 0);
         sdsl::bit_vector B_L = sdsl::bit_vector(n, 0);
@@ -213,11 +210,15 @@ class HybridMoveStructure {
         }
     }
 
+    //TODO: the C_array used here is the wrong one
     u_int64_t computePointer(uint64_t index) {
         uint64_t pi; 
-        size_t run_head = H_L[index]; 
-        pi = C[char_to_index[run_head]] + (*B_x_ranks[char_to_index[run_head]])(index) - 1; 
-        u_int64_t pointer = select_1_B_FL(pi + 1) - pi - 1; 
+        char run_head = this->H_L[index];
+        cout << "run_head: " << run_head << endl;
+        cout << "C: " << C[this->char_to_index[run_head]] << endl;
+        cout << "Rem: " << (*this->B_x_ranks[this->char_to_index[run_head]])(index) <<endl;
+        pi = this->C[this->char_to_index[run_head]] + (*this->B_x_ranks[this->char_to_index[run_head]])(index) - 1;
+        u_int64_t pointer = this->select_1_B_FL(pi + 1) - pi - 1;
         return pointer;
     }
 

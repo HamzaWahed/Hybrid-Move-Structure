@@ -10,3 +10,9 @@ cd build
 cmake ..
 make
 ```
+
+To run hybrid_move_struture.cpp: 
+
+```bash
+./build/hybrid_move_exec <BWT file> <number of characters in BWT file>
+```
