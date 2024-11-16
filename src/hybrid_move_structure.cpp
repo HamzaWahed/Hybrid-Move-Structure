@@ -8,6 +8,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     HybridMoveStructure hmv(file, text_length);
-    cout << "pointer: " << hmv.computePointer(3) << endl;
+    cout << "pointer: " << hmv.computePointer(1) << endl;
 
 }
