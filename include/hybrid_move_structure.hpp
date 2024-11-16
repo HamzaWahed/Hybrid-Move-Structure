@@ -54,8 +54,11 @@ class HybridMoveStructure {
         n = text_length;
         uint length = 0;
         std::vector<int> chars(kALPHABET_SIZE, 0);
+        std::vector<int> chars_runs(kALPHABET_SIZE, 0);
         // to keep the count of each character, used in computing C
         std::vector<int> counts;
+        // to keep the count of how many runs of each character exist
+        std::vector<int> counts_runs;
         // Temporarily build these to obtain B_FL
         sdsl::bit_vector B_F = sdsl::bit_vector(n, 0);
         sdsl::bit_vector B_L = sdsl::bit_vector(n, 0);
@@ -78,6 +81,9 @@ class HybridMoveStructure {
             c = c <= kTerminator ? kTerminator : c;
 
             if (idx != 0 && c != last_c) {
+                // increment the counter for the number of runs with the current character
+                chars_runs[c_in] += 1;
+
                 // save the run head character in H_L
                 H_L.push_back(static_cast<char>(last_c));
 
@@ -85,6 +91,7 @@ class HybridMoveStructure {
                 if(idx - 1 == 0) {
                     B_L[0] = 1;
                     run_heads.push_back(idx-1);
+                    chars_runs[last_c] += 1;
                 }
                 run_heads.push_back(idx);
                 B_L[idx] = 1;
@@ -119,15 +126,30 @@ class HybridMoveStructure {
                 sdsl::bit_vector *new_occ_vector = new sdsl::bit_vector(n, 0);
                 occs.emplace_back(
                     std::unique_ptr<sdsl::bit_vector>(new_occ_vector));
+                if (chars_runs[i] != 0 ) {
+                    counts_runs.push_back(chars_runs[i]);
+                }
             }
         }
 
-        // Building C
+        // Building Cs
         int count = 0;
+        int count_runs = 0;
         for (int i = 0; i < counts.size(); i++) {
             C.push_back(count);
             count += counts[i];
+
+            C_H.push_back(count_runs);
+            count_runs += counts_runs[i];
         }
+
+        cout << "C_H: " << endl;
+        for (const auto &ch : C_H) {
+            cout << ch << " ";
+        }
+        cout << endl;
+
+        
 
         //Building the B_x bit vectors
         for (int i = 0; i < r; i++) {
@@ -210,14 +232,12 @@ class HybridMoveStructure {
         }
     }
 
-    //TODO: the C_array used here is the wrong one
     u_int64_t computePointer(uint64_t index) {
-        uint64_t pi; 
+        uint64_t pi;
         char run_head = this->H_L[index];
         cout << "run_head: " << run_head << endl;
-        cout << "C: " << C[this->char_to_index[run_head]] << endl;
-        cout << "Rem: " << (*this->B_x_ranks[this->char_to_index[run_head]])(index) <<endl;
-        pi = this->C[this->char_to_index[run_head]] + (*this->B_x_ranks[this->char_to_index[run_head]])(index) - 1;
+        pi = this->C_H[this->char_to_index[run_head]] + (*this->B_x_ranks[this->char_to_index[run_head]])(index);
+        cout << "pi: " << pi << endl;
         u_int64_t pointer = this->select_1_B_FL(pi + 1) - pi - 1;
         return pointer;
     }
@@ -266,7 +286,9 @@ class HybridMoveStructure {
     u_int64_t r;
     vector<Row> rows;
     sdsl::bit_vector B_FL;
+    // TODO: move the 'C' array out of here
     std::vector<int> C;
+    std::vector<int> C_H;
     std::vector<char> H_L;
     std::vector<std::unique_ptr<sdsl::bit_vector>> B_x;
     // Rank data structure for B_x bit vectors
