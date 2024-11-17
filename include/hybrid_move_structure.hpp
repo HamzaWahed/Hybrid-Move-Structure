@@ -1,3 +1,4 @@
+#include <mach/notify.h>
 #ifndef __HYBRID_MOVE_STRUCTURE__
 
 #include <fstream>
@@ -252,34 +253,16 @@ class HybridMoveStructure {
         return pointer;
     }
 
-    /**
-     * @brief Computes the mapping of a position in L to a position in F, and
-     * then returns the the run index and offset of that position in L.
-     *
-     * @param position and offset of a character in L
-     * @return position and offset of run index in L
-     */
     Position LF(Position pos) {
-        size_t run_F, offset_F;
-        size_t run_L = pos.run;
-        size_t offset_L = pos.offset;
-        size_t pointer = computePointer(run_L);
-        size_t next_Pointer = computePointer(run_L + 1);
-        run_F = pointer;
-        offset_F = 0;
+        Position next_pos = {computePointer(pos.run),
+                             get(pos).offset + pos.offset};
 
-        while (offset_F <= offset_L) {
-            if (pointer + offset_F == next_Pointer) {
-                run_L += 1;
-                pointer = next_Pointer;
-                next_Pointer = computePointer(run_L + 1);
-                run_F = pointer;
-            }
-
-            offset_F += 1;
+        while (next_pos.offset >= get(next_pos.run).length) {
+            next_pos.offset -= get(next_pos.run).length;
+            next_pos.run++;
         }
 
-        return Position{run_F, offset_F};
+        return next_pos;
     }
 
     const Row get(u_int64_t pos) {

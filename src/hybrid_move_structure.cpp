@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "Unable to open file: " << argv[1] << std::endl;
         return 1;
     }
+
     HybridMoveStructure hmv(file, text_length);
     cout << "pointer: " << hmv.computePointer(1) << endl;
-
 }
