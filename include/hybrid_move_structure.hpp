@@ -153,12 +153,6 @@ class HybridMoveStructure {
             count_runs += counts_runs[i];
         }
 
-        // cout << "C_H: " << endl;
-        // for (const auto &ch : C_H) {
-        //     cout << ch << " ";
-        // }
-        // cout << endl;
-
         // Building the B_x bit vectors
         for (int i = 0; i < r; i++) {
             (*B_x[char_to_index[H_L[i]]])[i] = 1;
@@ -234,12 +228,6 @@ class HybridMoveStructure {
         B_FL = B_FL_temp;
         select_1_B_FL = sdsl::select_support_mcl<>(&B_FL);
 
-        // cout << "B_FL: " << endl;
-        // for (size_t i = 0; i < B_FL.size(); ++i) {
-        //     cout << B_FL[i];
-        // }
-        // cout << endl;
-
         computeTable(L_block_indices);
         cout << "Rows: " << endl;
         for (const auto &row : rows) {
@@ -257,12 +245,9 @@ class HybridMoveStructure {
         uint64_t pi;
         char run_head = this->H_L[index];
 
-        // cout << "run_head: " << run_head << endl;
-
         pi = this->C_H[this->char_to_index[run_head]] +
              (*this->B_x_ranks[this->char_to_index[run_head]])(index);
 
-        // cout << "pi: " << pi << endl;
         u_int64_t pointer = this->select_1_B_FL(pi + 1) - pi - 1;
         return pointer;
     }
