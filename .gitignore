@@ -52,3 +52,6 @@ CMakeUserPresets.json
 
 # Visual Studio Code
 .vscode/
+
+# Jetbrains
+.idea/
