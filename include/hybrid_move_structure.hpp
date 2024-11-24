@@ -449,6 +449,17 @@ class HybridMoveStructure {
         return pointer;
     }
 
+    u_int64_t computePI(uint64_t index) {
+        uint64_t pi;
+        char run_head = this->H_L[index];
+
+        pi = this->C_H[this->char_to_index[run_head]] +
+             (*this->B_x_ranks[this->char_to_index[run_head]])(index);
+
+        return pi;
+    }
+
+
     Position LF(Position pos) {
         Position next_pos = {computePointer(pos.run),
                              get(pos).offset + pos.offset};
@@ -459,6 +470,63 @@ class HybridMoveStructure {
         }
 
         return next_pos;
+    }
+
+    // TODO: change some of the datatypes as needed
+    // TODO: is this backwards search?
+    int backwards_search(char *pattern) {
+        size_t len = strlen(pattern);
+        cout << "Pattern: " << pattern << endl;
+
+        // initialize offset and run pointers
+        uint32_t sr = 0;
+        uint32_t er = rows.size() - 1;
+        size_t si = 0;
+        size_t ei = rows[er].length - 1;
+
+        for (size_t i = 0; i < len; i++) {
+            uint c = static_cast<int>(pattern[len - i - 1]);
+
+            // find the next run range
+            while (rows[sr].head != c) {
+                sr += 1;
+                si = 0;
+            }
+            while (rows[er].head != c) {
+                er -= 1;
+                ei = rows[er].length - 1;
+            }
+
+            // break if the range is invalid
+            if(sr > er) {
+                printf("returned: 0\n");
+                return 0;
+            }
+            
+            // map the current range to F and get that range's pointers in L
+            uint8_t s_off = rows[sr].offset;
+            uint8_t e_off = rows[er].offset;
+            sr = computePointer(sr);
+            er = computePointer(er);
+            ei += e_off;
+            si += s_off;
+
+            // adjust for overflow in offset value
+            while (si > rows[sr].length) {
+                si -= rows[sr].length;
+                sr += 1;
+            }
+            while (ei > rows[er].length) {
+                ei -= rows[er].length;
+                er += 1;
+            }
+        }
+
+        // print result
+        u_int64_t count = er == sr ? ei - si + 1 : (er - sr) + ei + (rows[sr].length - si);
+        cout << "Count: " << count << endl;
+
+        return count;
     }
 
     const Row get(u_int64_t pos) {
