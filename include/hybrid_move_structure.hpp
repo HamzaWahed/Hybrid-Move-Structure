@@ -288,8 +288,8 @@ class HybridMoveStructure {
     u_int64_t r;
     vector<Row> rows;
     sdsl::bit_vector B_FL;
-    std::vector<int> C;
-    std::vector<int> C_H;
+    std::vector<u_int64_t> C;
+    std::vector<u_int64_t> C_H;
     std::vector<char> H_L;
     std::vector<std::unique_ptr<sdsl::bit_vector>> B_x;
 
