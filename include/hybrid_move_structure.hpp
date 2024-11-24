@@ -237,6 +237,202 @@ class HybridMoveStructure {
         }
     }
 
+    HybridMoveStructure(ifstream &heads) {
+        std::cout << "Reading heads" << std::endl;
+        heads.clear();
+        heads.seekg(0);
+
+        heads >> n;
+        heads.get();
+
+        rows = vector<Row>();
+        vector<vector<u_int64_t>> L_block_indices =
+            vector<vector<u_int64_t>>(kALPHABET_SIZE);
+
+        uint last_c;
+        int c_in;
+        uint c_length;
+        u_int64_t run = 0;
+        u_int64_t idx = 0;
+        r = 0;
+        // n = text_length;
+        uint length = 0;
+
+        // stores the frequency of each character occurence
+        std::vector<int> chars(kALPHABET_SIZE, 0);
+
+        // stores the frequency of each run head occurence
+        std::vector<int> chars_runs(kALPHABET_SIZE, 0);
+
+        // to keep the count of each character, used in computing C
+        std::vector<int> counts;
+
+        // to keep the count of how many runs of each character exist
+        std::vector<int> counts_runs;
+
+        // Temporarily build these to obtain B_FL
+        sdsl::bit_vector B_F = sdsl::bit_vector(n, 0);
+        sdsl::bit_vector B_L = sdsl::bit_vector(n, 0);
+        sdsl::sd_vector B_F_sparse;
+        sdsl::sd_vector B_L_sparse;
+
+        // to hold the BWT offset of every run head
+        std::vector<int> run_heads;
+
+        // for computing the LF mapping for building the B_F vector
+        std::vector<std::unique_ptr<sdsl::bit_vector>> occs;
+        std::vector<std::unique_ptr<sdsl::rank_support_v<>>> occs_rank;
+
+        char_to_index.resize(kALPHABET_SIZE);
+        std::fill(char_to_index.begin(), char_to_index.end(), kALPHABET_SIZE);
+
+        while ((c_in = heads.get()) != EOF) {
+            // increase count of the characters to find the characters that
+            // exist in the BWT
+            heads.get();
+            heads >> c_length;
+            chars[c_in] += c_length;
+            heads.get();
+
+            uint c = static_cast<uint>(c_in);
+            c = c <= kTerminator ? kTerminator : c;
+
+            // increment the counter for the number of runs with the current
+            // character
+            chars_runs[c_in] += 1;
+
+            // save the run head character in H_L
+            H_L.push_back(static_cast<char>(c_in));
+            run_heads.push_back(idx);
+            B_L[idx] = 1;
+            rows.push_back({c, c_length, 0});
+            L_block_indices[c_in].push_back(run++);
+
+            idx += c_length;
+            
+        }
+
+        r = rows.size();
+        int sigma = 0;
+
+        cout << "r: " << r << endl;
+
+        // Determining the number of B_x bit vectors
+        for (int i = 0; i < kALPHABET_SIZE; i++) {
+            if (chars[i] != 0) {
+                char_to_index[i] = sigma;
+                sigma += 1;
+                counts.push_back(chars[i]);
+                sdsl::bit_vector *new_b_vector = new sdsl::bit_vector(r, 0);
+                B_x.emplace_back(
+                    std::unique_ptr<sdsl::bit_vector>(new_b_vector));
+                sdsl::bit_vector *new_occ_vector = new sdsl::bit_vector(n, 0);
+                occs.emplace_back(
+                    std::unique_ptr<sdsl::bit_vector>(new_occ_vector));
+                if (chars_runs[i] != 0) {
+                    counts_runs.push_back(chars_runs[i]);
+                }
+            }
+        }
+
+
+        // Building C and C_H vectors
+        int count = 0;
+        int count_runs = 0;
+        for (int i = 0; i < counts.size(); i++) {
+            C.push_back(count);
+            count += counts[i];
+
+            C_H.push_back(count_runs);
+            count_runs += counts_runs[i];
+        }
+
+        // Building the B_x bit vectors
+        for (int i = 0; i < r; i++) {
+            (*B_x[char_to_index[H_L[i]]])[i] = 1;
+        }
+
+        //  create the rank objects for the B_x bit vectors
+        for (auto &B : B_x) {
+            B_x_ranks.emplace_back(std::unique_ptr<sdsl::rank_support_v<>>(
+                new sdsl::rank_support_v<>(B.get())));
+        }
+
+        // Build B_F from B_L
+        // NOTE: @NourA edited how the occs array is being filled compared to
+        // the one by done @MohsenZakeri
+        int curr_idx = 0;
+        for (int i = 0; i < r; i++) {
+            char curr_char = H_L[i];
+            int curr_length = rows[i].length;
+            for (int j = curr_idx; j < curr_idx + curr_length; j++) {
+                (*occs[char_to_index[curr_char]])[j] = 1;
+            }
+
+            curr_idx += curr_length;
+        }
+
+        // create the rank objects for the occurance bit vectors
+        for (auto &occ : occs) {
+            occs_rank.emplace_back(std::unique_ptr<sdsl::rank_support_v<>>(
+                new sdsl::rank_support_v<>(occ.get())));
+        }
+
+        sdsl::rank_support_v<> rank_B_L = sdsl::rank_support_v(&B_L);
+        for (int i = 0; i < r; i++) {
+            int lf = 0;
+            int alphabet_index = char_to_index[H_L[i]];
+            lf += C[alphabet_index];
+            // add the rank of the bwt_row
+            auto &occ_rank = *occs_rank[alphabet_index];
+            lf += static_cast<int>(occ_rank(run_heads[i]));
+            B_F[lf] = 1;
+        }
+
+        // Create the sparse bit vectors for B_F and B_L
+        B_F_sparse = sdsl::sd_vector<>(B_F);
+        B_L_sparse = sdsl::sd_vector<>(B_L);
+
+        // Build the B_FL bitvector
+        sdsl::bit_vector B_FL_temp(2 * r);
+
+        // track the index in B_FL
+        size_t i_BFL = 0;
+
+        // fill appropriate values in B_FL
+        auto it_BF = B_F_sparse.begin();
+        for (auto it_F = B_F_sparse.begin(), it_L = B_L_sparse.begin();
+             it_F != B_F_sparse.end() && it_L != B_L_sparse.end();
+             ++it_F, ++it_L, ++it_BF) {
+            if (*it_F == 1 && *it_L == 1) {
+                B_FL_temp[i_BFL] = 0;
+                i_BFL++;
+                B_FL_temp[i_BFL] = 1;
+                i_BFL++;
+            } else if (*it_F == 1) {
+                B_FL_temp[i_BFL] = 1;
+                i_BFL++;
+            } else if (*it_L == 1) {
+                B_FL_temp[i_BFL] = 0;
+                i_BFL++;
+            }
+        }
+
+        B_FL = B_FL_temp;
+        for (size_t i = 0; i < B_FL.size(); ++i) {
+            cout << B_FL[i];
+        }
+        cout << endl;
+        select_1_B_FL = sdsl::select_support_mcl<>(&B_FL);
+
+        computeTable(L_block_indices);
+        cout << "Rows: " << endl;
+        for (const auto &row : rows) {
+            cout << "Head: " << char(row.head) << ", Length: " << row.length
+                 << ", Offset: " << row.offset << endl;
+        }
+    }
+
     /**
      * @brief Instead of storing the pointer for each row, the Hybrid Move
      * Structure computes the pointer value instead, reducing the memory usage
