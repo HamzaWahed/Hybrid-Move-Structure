@@ -16,6 +16,8 @@ int main(int argc, char *argv[]) {
 
     Position pos = hmv.LF({2, 0});
 
-    assert(pos.run == 9);
-    assert(pos.run == 2);
+    assert(pos.run == 1);
+    assert(pos.offset == 0);
+
+    hmv.backwards_search("ATA");
 }
