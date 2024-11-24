@@ -309,7 +309,6 @@ class HybridMoveStructure {
             L_block_indices[c_in].push_back(run++);
 
             idx += c_length;
-            
         }
 
         r = rows.size();
@@ -334,7 +333,6 @@ class HybridMoveStructure {
                 }
             }
         }
-
 
         // Building C and C_H vectors
         int count = 0;
@@ -459,7 +457,6 @@ class HybridMoveStructure {
         return pi;
     }
 
-
     Position LF(Position pos) {
         Position next_pos = {computePointer(pos.run),
                              get(pos).offset + pos.offset};
@@ -498,11 +495,11 @@ class HybridMoveStructure {
             }
 
             // break if the range is invalid
-            if(sr > er) {
+            if (sr > er) {
                 printf("returned: 0\n");
                 return 0;
             }
-            
+
             // map the current range to F and get that range's pointers in L
             uint8_t s_off = rows[sr].offset;
             uint8_t e_off = rows[er].offset;
@@ -523,7 +520,8 @@ class HybridMoveStructure {
         }
 
         // print result
-        u_int64_t count = er == sr ? ei - si + 1 : (er - sr) + ei + (rows[sr].length - si);
+        u_int64_t count =
+            er == sr ? ei - si + 1 : (er - sr) + ei + (rows[sr].length - si);
         cout << "Count: " << count << endl;
 
         return count;
@@ -552,8 +550,8 @@ class HybridMoveStructure {
     u_int64_t r;
     vector<Row> rows;
     sdsl::bit_vector B_FL;
-    std::vector<int> C;
-    std::vector<int> C_H;
+    std::vector<u_int64_t> C;
+    std::vector<u_int64_t> C_H;
     std::vector<char> H_L;
     std::vector<std::unique_ptr<sdsl::bit_vector>> B_x;
 
