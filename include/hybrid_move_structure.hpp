@@ -280,7 +280,6 @@ class HybridMoveStructure {
     // TODO: is this backwards search?
     int backwards_search(char *pattern) {
         size_t len = strlen(pattern);
-        cout << "Pattern: " << pattern << endl;
 
         // initialize offset and run pointers
         uint32_t sr = 0;
@@ -303,7 +302,7 @@ class HybridMoveStructure {
 
             // break if the range is invalid
             if(sr > er) {
-                printf("returned: 0\n");
+                printf("0 occurrences of %s.\n", pattern);
                 return 0;
             }
             
@@ -327,9 +326,19 @@ class HybridMoveStructure {
         }
 
         // print result
-        u_int64_t count = er == sr ? ei - si + 1 : (er - sr) + ei + (rows[sr].length - si);
-        cout << "Count: " << count << endl;
-
+        u_int64_t count = 0; 
+        if(er == sr){
+            count = ei - si + 1;
+        } else {
+            uint32_t mid_r = sr + 1;
+            while(mid_r < er){
+                count += rows[mid_r].length;
+                mid_r += 1;
+            }
+            count += (ei + 1) + (rows[sr].length - si);
+        }
+        // cout << "Count: " << count << endl;
+        printf("%i occurrences of %s.\n", count, pattern);
         return count;
     }
 
