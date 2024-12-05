@@ -337,7 +337,6 @@ class HybridMoveStructure {
             }
             count += (ei + 1) + (rows[sr].length - si);
         }
-        // cout << "Count: " << count << endl;
         printf("%i occurrences of %s.\n", count, pattern);
         return count;
     }
