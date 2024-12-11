@@ -244,8 +244,9 @@ class HybridMoveStructure {
     }
 
     /**
-     * @brief Constructs Hybrid Move Structure from a file with the character and
-     * length of each run of the BWT per line
+     * @brief Constructs Hybrid Move Structure from a file with the size of the 
+     * BWT on the first line , the character and
+     * length of each run of the BWT on the following lines.
      */
     HybridMoveStructure(ifstream &heads) {
         std::cout << "Reading heads" << std::endl;
@@ -278,6 +279,9 @@ class HybridMoveStructure {
 
         // to keep the count of how many runs of each character exist
         std::vector<int> counts_runs;
+
+        // to help B_L and B_F
+        std::vector<u_int64_t> C;
 
         // temporarily build these to obtain B_FL
         sdsl::bit_vector B_F = sdsl::bit_vector(n, 0);
