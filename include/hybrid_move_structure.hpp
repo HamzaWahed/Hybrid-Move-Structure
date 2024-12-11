@@ -39,6 +39,9 @@ struct Position {
 class HybridMoveStructure {
   public:
     HybridMoveStructure() {}
+    /**
+     * @brief Constructs Hybrid Move Structure given the BWT and its length
+     */
     HybridMoveStructure(ifstream &bwt, u_int64_t text_length) {
         bwt.clear();
         bwt.seekg(0);
@@ -128,7 +131,7 @@ class HybridMoveStructure {
         r = rows.size();
         int sigma = 0;
 
-        // Determining the number of B_x bit vectors
+        // determining the number of B_x bit vectors
         for (int i = 0; i < kALPHABET_SIZE; i++) {
             if (chars[i] != 0) {
                 char_to_index[i] = sigma;
@@ -146,7 +149,7 @@ class HybridMoveStructure {
             }
         }
 
-        // Building C and C_H vectors
+        // building C and C_H vectors
         int count = 0;
         int count_runs = 0;
         for (int i = 0; i < counts.size(); i++) {
@@ -157,18 +160,18 @@ class HybridMoveStructure {
             count_runs += counts_runs[i];
         }
 
-        // Building the B_x bit vectors
+        // building the B_x bit vectors
         for (int i = 0; i < r; i++) {
             (*B_x[char_to_index[H_L[i]]])[i] = 1;
         }
 
-        //  create the rank objects for the B_x bit vectors
+        // create the rank objects for the B_x bit vectors
         for (auto &B : B_x) {
             B_x_ranks.emplace_back(std::unique_ptr<sdsl::rank_support_v<>>(
                 new sdsl::rank_support_v<>(B.get())));
         }
 
-        // Build B_F from B_L
+        // build B_F from B_L
         // NOTE: @NourA edited how the occs array is being filled compared to
         // the one by done @MohsenZakeri
         int curr_idx = 0;
@@ -200,11 +203,11 @@ class HybridMoveStructure {
             B_F[lf] = 1;
         }
 
-        // Create the sparse bit vectors for B_F and B_L
+        // create the sparse bit vectors for B_F and B_L
         B_F_sparse = sdsl::sd_vector<>(B_F);
         B_L_sparse = sdsl::sd_vector<>(B_L);
 
-        // Build the B_FL bitvector
+        // build the B_FL bitvector
         sdsl::bit_vector B_FL_temp(2 * r);
 
         // track the index in B_FL
@@ -240,6 +243,10 @@ class HybridMoveStructure {
         }
     }
 
+    /**
+     * @brief Constructs Hybrid Move Structure from a file with the character and
+     * length of each run of the BWT per line
+     */
     HybridMoveStructure(ifstream &heads) {
         std::cout << "Reading heads" << std::endl;
         heads.clear();
@@ -258,7 +265,6 @@ class HybridMoveStructure {
         u_int64_t run = 0;
         u_int64_t idx = 0;
         r = 0;
-        // n = text_length;
         uint length = 0;
 
         // stores the frequency of each character occurence
@@ -273,7 +279,7 @@ class HybridMoveStructure {
         // to keep the count of how many runs of each character exist
         std::vector<int> counts_runs;
 
-        // Temporarily build these to obtain B_FL
+        // temporarily build these to obtain B_FL
         sdsl::bit_vector B_F = sdsl::bit_vector(n, 0);
         sdsl::bit_vector B_L = sdsl::bit_vector(n, 0);
         sdsl::sd_vector B_F_sparse;
@@ -319,7 +325,7 @@ class HybridMoveStructure {
 
         cout << "r: " << r << endl;
 
-        // Determining the number of B_x bit vectors
+        // determining the number of B_x bit vectors
         for (int i = 0; i < kALPHABET_SIZE; i++) {
             if (chars[i] != 0) {
                 char_to_index[i] = sigma;
@@ -337,7 +343,7 @@ class HybridMoveStructure {
             }
         }
 
-        // Building C and C_H vectors
+        // building C and C_H vectors
         int count = 0;
         int count_runs = 0;
         for (int i = 0; i < counts.size(); i++) {
@@ -348,7 +354,7 @@ class HybridMoveStructure {
             count_runs += counts_runs[i];
         }
 
-        // Building the B_x bit vectors
+        // building the B_x bit vectors
         for (int i = 0; i < r; i++) {
             (*B_x[char_to_index[H_L[i]]])[i] = 1;
         }
@@ -359,7 +365,7 @@ class HybridMoveStructure {
                 new sdsl::rank_support_v<>(B.get())));
         }
 
-        // Build B_F from B_L
+        // build B_F from B_L
         // NOTE: @NourA edited how the occs array is being filled compared to
         // the one by done @MohsenZakeri
         int curr_idx = 0;
@@ -390,11 +396,11 @@ class HybridMoveStructure {
             B_F[lf] = 1;
         }
 
-        // Create the sparse bit vectors for B_F and B_L
+        // create the sparse bit vectors for B_F and B_L
         B_F_sparse = sdsl::sd_vector<>(B_F);
         B_L_sparse = sdsl::sd_vector<>(B_L);
 
-        // Build the B_FL bitvector
+        // build the B_FL bitvector
         sdsl::bit_vector B_FL_temp(2 * r);
 
         // track the index in B_FL
@@ -440,16 +446,15 @@ class HybridMoveStructure {
      * of the Move Structure.
      */
     u_int64_t computePointer(uint64_t index) {
-        uint64_t pi;
-        char run_head = this->H_L[index];
-
-        pi = this->C_H[this->char_to_index[run_head]] +
-             (*this->B_x_ranks[this->char_to_index[run_head]])(index);
-
+        uint64_t pi = computePI(index);
         u_int64_t pointer = this->select_1_B_FL(pi + 1) - pi - 1;
         return pointer;
     }
 
+    /**
+     * @brief Computes the LF mapping of the first index of a run in the L 
+     * column and returns its run in the F column
+     */
     u_int64_t computePI(uint64_t index) {
         uint64_t pi;
         char run_head = this->H_L[index];
@@ -460,13 +465,18 @@ class HybridMoveStructure {
         return pi;
     }
 
+    /**
+     * @brief Computes the LF mapping of a given (run, offset) pair in the BWT
+     */
     Position LF(Position pos) {
         Position next_pos = {computePointer(pos.run), pos.offset};
         return next_pos;
     }
 
-    // TODO: change some of the datatypes as needed
-    // TODO: is this backwards search?
+    /**
+     * @brief Searches for a the number of occurrences of a pattern in the BWT 
+     * using the computePointer (and computePI) functions
+     */
     int backwards_search(char *pattern) {
         size_t len = strlen(pattern);
         cout << "Pattern: " << pattern << endl;
@@ -550,7 +560,7 @@ class HybridMoveStructure {
     std::vector<char> H_L;
     std::vector<std::unique_ptr<sdsl::bit_vector>> B_x;
 
-    // Rank data structure for B_x bit vectors
+    // rank data structure for B_x bit vectors
     std::vector<std::unique_ptr<sdsl::rank_support_v<>>> B_x_ranks;
 
     // to map a character to the index
