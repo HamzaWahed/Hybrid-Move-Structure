@@ -90,6 +90,11 @@ class HybridMoveStructure {
         std::fill(char_to_index.begin(), char_to_index.end(), kALPHABET_SIZE);
 
         while ((c_in = bwt.get()) != EOF) {
+            // temporary fix for appearance of some NULL character in the middle
+            // of the BWT
+            if(c_in == 0) {
+                continue;
+            }
             // increase count of the characters to find the characters that
             // exist in the BWT
             chars[c_in] += 1;
@@ -236,11 +241,11 @@ class HybridMoveStructure {
         select_1_B_FL = sdsl::select_support_mcl<>(&B_FL);
 
         computeTable(L_block_indices);
-        cout << "Rows: " << endl;
-        for (const auto &row : rows) {
-            cout << "Head: " << char(row.head) << ", Length: " << row.length
-                 << ", Offset: " << row.offset << endl;
-        }
+        // cout << "Rows: " << endl;
+        // for (const auto &row : rows) {
+        //     cout << "Head: " << char(row.head) << ", Length: " << row.length
+        //          << ", Offset: " << row.offset << endl;
+        // }
     }
 
     /**
