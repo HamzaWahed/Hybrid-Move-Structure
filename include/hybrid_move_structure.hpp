@@ -461,14 +461,7 @@ class HybridMoveStructure {
     }
 
     Position LF(Position pos) {
-        Position next_pos = {computePointer(pos.run),
-                             get(pos).offset + pos.offset};
-
-        while (next_pos.offset >= get(next_pos.run).length) {
-            next_pos.offset -= get(next_pos.run).length;
-            next_pos.run++;
-        }
-
+        Position next_pos = {computePointer(pos.run), pos.offset};
         return next_pos;
     }
 
