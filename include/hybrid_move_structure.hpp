@@ -67,6 +67,9 @@ class HybridMoveStructure {
         // to keep the count of how many runs of each character exist
         std::vector<int> counts_runs;
 
+        // to help B_L and B_F
+        std::vector<u_int64_t> C;
+
         // Temporarily build these to obtain B_FL
         sdsl::bit_vector B_F = sdsl::bit_vector(n, 0);
         sdsl::bit_vector B_L = sdsl::bit_vector(n, 0);
@@ -550,7 +553,6 @@ class HybridMoveStructure {
     u_int64_t r;
     vector<Row> rows;
     sdsl::bit_vector B_FL;
-    std::vector<u_int64_t> C;
     std::vector<u_int64_t> C_H;
     std::vector<char> H_L;
     std::vector<std::unique_ptr<sdsl::bit_vector>> B_x;
