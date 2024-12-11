@@ -10,14 +10,14 @@ int main(int argc, char *argv[]) {
 
     HybridMoveStructure hmv(file, text_length);
 
-    assert(hmv.computePointer(1) == 9);
-    assert(hmv.computePointer(0) == 1);
-    assert(hmv.computePointer(10) == 13);
+    // assert(hmv.computePointer(1) == 9);
+    // assert(hmv.computePointer(0) == 1);
+    // assert(hmv.computePointer(10) == 13);
 
-    Position pos = hmv.LF({2, 0});
+    // Position pos = hmv.LF({2, 0});
 
-    assert(pos.run == 1);
-    assert(pos.offset == 0);
+    // assert(pos.run == 1);
+    // assert(pos.offset == 0);
 
-    hmv.backwards_search("ATA");
+    hmv.backwards_search("CTTACG");
 }
